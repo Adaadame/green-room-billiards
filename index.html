@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Green Room · 真实物理台球</title>
+<meta name="description" content="拥有真实碰撞、摩擦、库边反弹与入袋效果的沉浸式台球游戏">
+<style>
+:root{--ink:#f4f0e7;--muted:#8f9a93;--gold:#d6ab69}*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#090d0b;color:var(--ink)}
+body{font-family:Arial,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(41,73,59,.34),transparent 38%),#090d0b}
+button,input{font:inherit}button{color:inherit}.game{min-height:100dvh;display:grid;grid-template-rows:82px minmax(420px,1fr) 126px;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between;padding:0 34px;border-bottom:1px solid #27302b;background:rgba(9,13,11,.9);z-index:4}
+.brand{display:flex;align-items:center;gap:13px;min-width:230px}.eight{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;color:#111;background:#f0eee6;font-family:Georgia,serif;font-weight:800;box-shadow:inset -6px -7px 8px #979a95,0 4px 12px #000}
+.brand strong{display:block;font-family:Georgia,serif;font-size:18px;letter-spacing:.12em}.brand small{display:block;margin-top:3px;font-size:8px;letter-spacing:.3em;color:#738078}
+.score{display:flex;align-items:center;gap:25px;text-align:center}.score div{display:grid;grid-template-columns:auto auto;align-items:baseline;gap:10px}.score small{font-size:10px;letter-spacing:.12em;color:#718078}.score strong{font:24px Georgia,serif}.score i{height:25px;width:1px;background:#39423d}
+.actions{min-width:230px;display:flex;justify-content:flex-end;gap:9px}.actions button{padding:10px 13px;border:1px solid #303b35;background:transparent;border-radius:4px;color:#9aa39d;cursor:pointer;font-size:11px}.actions .reset{color:#e4d6bd;border-color:#725c3e;background:#2a241a}
+.arena{position:relative;min-height:0;display:grid;place-items:center;perspective:1100px}.arena:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 25%,rgba(0,0,0,.47) 85%);pointer-events:none;z-index:2}
+canvas{display:block;width:min(94vw,1340px);height:min(calc(100vh - 250px),700px);min-height:390px;touch-action:none;cursor:crosshair;transform:rotateX(3deg);filter:saturate(1.08)}
+.status{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:3;border:1px solid rgba(141,165,151,.22);background:rgba(8,14,11,.86);padding:8px 13px;border-radius:30px;color:#a2afa7;font-size:10px;letter-spacing:.1em;white-space:nowrap}.status:before{content:"";display:inline-block;width:6px;height:6px;margin-right:8px;border-radius:50%;background:#87b78b;box-shadow:0 0 7px #72bc7c}
+footer{display:grid;grid-template-columns:1fr minmax(330px,500px) 1fr;align-items:center;gap:45px;padding:15px 42px 20px;border-top:1px solid #242e29;background:linear-gradient(#101612,#080c0a);z-index:4}
+.hint{color:#59655e;font-size:10px;letter-spacing:.1em}.power-label{display:flex;justify-content:space-between;align-items:baseline;color:#8c9891;font-size:10px;letter-spacing:.17em}.power-label strong{color:#e9e3d8;font:22px Georgia,serif}.power-label small{font:10px Arial;color:#7b867f}
+input[type=range]{appearance:none;width:100%;height:5px;border-radius:5px;margin:14px 0 8px;background:linear-gradient(90deg,#8caf85 var(--p),#27332d var(--p));outline:none}input::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:#e8e3d9;border:4px solid #52745d;box-shadow:0 0 0 2px #a8c9ad,0 3px 8px #000}
+.scale{display:flex;justify-content:space-between;color:#4f5d55;font-size:8px;letter-spacing:.14em}.shoot{justify-self:end;width:94px;height:58px;border:1px solid #a8824e;background:linear-gradient(145deg,#87653a,#3e2c18);border-radius:5px;cursor:pointer;box-shadow:0 8px 20px #000}.shoot span{display:block;font-family:Georgia,serif;font-size:16px}.shoot small{font-size:7px;letter-spacing:.2em;color:#bca77f}
+@media(max-width:760px){.game{grid-template-rows:64px minmax(360px,1fr) 146px}header{padding:0 14px}.brand{min-width:0}.brand strong{font-size:13px}.brand small,.score small,.score i,.actions .sound{display:none}.score{gap:8px}.score div{display:block}.score strong{font-size:17px}.actions{min-width:0}.actions button{padding:8px;font-size:9px}canvas{width:100vw;height:calc(100vh - 210px);min-height:350px}footer{grid-template-columns:1fr 76px;gap:18px;padding:14px 18px 20px}.hint{display:none}.shoot{width:76px;height:54px}}
+</style>
+</head>
+<body>
+<main class="game">
+<header>
+  <div class="brand"><span class="eight">8</span><div><strong>GREEN ROOM</strong><small>PHYSICS BILLIARDS</small></div></div>
+  <div class="score"><div><small>本局击球</small><strong id="shots">00</strong></div><i></i><div><small>已进球</small><strong><span id="sunk">00</span>/15</strong></div></div>
+  <div class="actions"><button class="sound" id="sound">音效开</button><button class="reset" id="reset">重新开球</button></div>
+</header>
+<section class="arena"><canvas id="table" aria-label="可交互的台球桌"></canvas><div class="status" id="status">移动指针瞄准，点击击球</div></section>
+<footer>
+  <div class="hint">鼠标 / 触屏瞄准 · 空格键击球</div>
+  <div><div class="power-label"><span>击球力度</span><strong><b id="powerValue">58</b><small>%</small></strong></div><input id="power" type="range" min="10" max="100" value="58" style="--p:58%"><div class="scale"><span>轻柔</span><span>精准</span><span>强力</span></div></div>
+  <button class="shoot" id="shoot"><span>击球</span><small>SPACE</small></button>
+</footer>
+</main>
+<script>
+const W=1000,H=500,R=14,POCKET=27,canvas=document.querySelector("#table"),ctx=canvas.getContext("2d");
+const colors=["#f2c94c","#2868bd","#d33731","#6b3ca0","#e77b25","#237b4b","#7e2325","#17191d","#f2c94c","#2868bd","#d33731","#6b3ca0","#e77b25","#237b4b","#7e2325"];
+const pockets=[[0,0],[W/2,-4],[W,0],[0,H],[W/2,H+4],[W,H]];
+let balls=[],aim={x:520,y:250},power=58,moving=false,shots=0,sunk=0,muted=false,audio;
+function rack(){balls=[{n:0,x:245,y:H/2,vx:0,vy:0,color:"#f3f1e8",stripe:false,sunk:false}];let order=[1,9,2,10,8,3,11,4,12,5,13,6,14,7,15],k=0,gap=R*2+.5;for(let row=0;row<5;row++)for(let j=0;j<=row;j++){let n=order[k++];balls.push({n,x:705+row*gap*.87,y:H/2+(j-row/2)*gap,vx:0,vy:0,color:colors[n-1],stripe:n>8,sunk:false})}}
+function sound(strength,freq=110){if(muted||strength<.25)return;let AC=window.AudioContext||window.webkitAudioContext;audio=audio||new AC;let o=audio.createOscillator(),g=audio.createGain();o.frequency.value=freq;g.gain.setValueAtTime(Math.min(.08,strength*.015),audio.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+.055);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+.06)}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function drawBall(b){let sh=ctx.createRadialGradient(b.x+7,b.y+10,2,b.x+7,b.y+10,R*1.5);sh.addColorStop(0,"rgba(0,0,0,.45)");sh.addColorStop(1,"transparent");ctx.fillStyle=sh;ctx.beginPath();ctx.ellipse(b.x+6,b.y+9,R*1.3,R*.72,0,0,Math.PI*2);ctx.fill();let body=ctx.createRadialGradient(b.x-5,b.y-7,1,b.x,b.y,R*1.2);body.addColorStop(0,"#fff");body.addColorStop(.14,b.n?b.color:"#fffdf4");body.addColorStop(.72,b.n?b.color:"#d9d7cf");body.addColorStop(1,"#0c1114");ctx.fillStyle=body;ctx.beginPath();ctx.arc(b.x,b.y,R,0,Math.PI*2);ctx.fill();if(b.stripe){ctx.save();ctx.beginPath();ctx.arc(b.x,b.y,R-1,0,Math.PI*2);ctx.clip();ctx.fillStyle="#f3f0df";ctx.fillRect(b.x-R,b.y-6,R*2,12);ctx.restore()}if(b.n){ctx.fillStyle="#f6f2df";ctx.beginPath();ctx.arc(b.x,b.y,6.1,0,Math.PI*2);ctx.fill();ctx.fillStyle="#15191b";ctx.font="bold 8px Arial";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(b.n,b.x,b.y+.5)}ctx.fillStyle="rgba(255,255,255,.72)";ctx.beginPath();ctx.ellipse(b.x-5,b.y-6,3,1.8,-.5,0,Math.PI*2);ctx.fill()}
+function render(){let cw=canvas.width,ch=canvas.height,scale=Math.min((cw-76)/(W+100),(ch-76)/(H+100)),ox=(cw-W*scale)/2,oy=(ch-H*scale)/2;ctx.clearRect(0,0,cw,ch);ctx.save();ctx.translate(ox,oy);ctx.scale(scale,scale);ctx.shadowColor="rgba(0,0,0,.7)";ctx.shadowBlur=45;ctx.shadowOffsetY=25;rr(-52,-52,W+104,H+104,46);let wood=ctx.createLinearGradient(0,-50,W,H+50);wood.addColorStop(0,"#694123");wood.addColorStop(.35,"#b47a3c");wood.addColorStop(.7,"#6b3f20");wood.addColorStop(1,"#c08b4d");ctx.fillStyle=wood;ctx.fill();ctx.shadowColor="transparent";ctx.strokeStyle="#2e190f";ctx.lineWidth=6;ctx.stroke();rr(-22,-22,W+44,H+44,25);ctx.fillStyle="#163d35";ctx.fill();ctx.strokeStyle="#102a25";ctx.lineWidth=8;ctx.stroke();let felt=ctx.createRadialGradient(W*.46,H*.38,30,W/2,H/2,W*.68);felt.addColorStop(0,"#16866c");felt.addColorStop(.55,"#09624f");felt.addColorStop(1,"#053d34");ctx.fillStyle=felt;ctx.fillRect(0,0,W,H);for(let [px,py] of pockets){let p=ctx.createRadialGradient(px-4,py-5,2,px,py,POCKET+5);p.addColorStop(0,"#010403");p.addColorStop(.65,"#050706");p.addColorStop(1,"#17241e");ctx.fillStyle=p;ctx.beginPath();ctx.arc(px,py,POCKET+4,0,Math.PI*2);ctx.fill()}let cue=balls[0];if(!moving&&!cue.sunk){let dx=aim.x-cue.x,dy=aim.y-cue.y,d=Math.hypot(dx,dy)||1,nx=dx/d,ny=dy/d;ctx.setLineDash([9,7]);ctx.strokeStyle="rgba(255,255,255,.72)";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cue.x+nx*(R+4),cue.y+ny*(R+4));ctx.lineTo(cue.x+nx*430,cue.y+ny*430);ctx.stroke();ctx.setLineDash([]);let pull=34+power*.45;ctx.strokeStyle="#d2a65f";ctx.lineWidth=7;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(cue.x-nx*(R+pull),cue.y-ny*(R+pull));ctx.lineTo(cue.x-nx*(350+pull),cue.y-ny*(350+pull));ctx.stroke()}balls.filter(b=>!b.sunk).forEach(drawBall);ctx.restore()}
+function physics(){let active=false;for(let b of balls){if(b.sunk)continue;b.x+=b.vx;b.y+=b.vy;b.vx*=.9912;b.vy*=.9912;if(Math.hypot(b.vx,b.vy)<.025)b.vx=b.vy=0;else active=true;let pocketed=false;for(let [px,py]of pockets)if(Math.hypot(b.x-px,b.y-py)<POCKET){b.sunk=true;b.vx=b.vy=0;pocketed=true;if(b.n){sunk++;document.querySelector("#sunk").textContent=String(sunk).padStart(2,"0")}sound(2.5,62);break}if(pocketed)continue;if(b.x<R){b.x=R;b.vx=Math.abs(b.vx)*.88}if(b.x>W-R){b.x=W-R;b.vx=-Math.abs(b.vx)*.88}if(b.y<R){b.y=R;b.vy=Math.abs(b.vy)*.88}if(b.y>H-R){b.y=H-R;b.vy=-Math.abs(b.vy)*.88}}
+for(let i=0;i<balls.length;i++)for(let j=i+1;j<balls.length;j++){let a=balls[i],b=balls[j];if(a.sunk||b.sunk)continue;let dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy;if(d2>0&&d2<(R*2)**2){let d=Math.sqrt(d2),nx=dx/d,ny=dy/d,o=R*2-d;a.x-=nx*o/2;a.y-=ny*o/2;b.x+=nx*o/2;b.y+=ny*o/2;let rel=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;if(rel<0){let im=-1.94*rel/2;a.vx-=im*nx;a.vy-=im*ny;b.vx+=im*nx;b.vy+=im*ny;sound(Math.abs(rel),125)}}}if(!active&&moving){moving=false;document.querySelector("#status").textContent=balls[0].sunk?"母球落袋 · 下一杆自动复位":"球已静止 · 继续瞄准"}}
+let last=performance.now(),acc=0;function frame(now){acc+=Math.min(40,now-last);last=now;while(acc>=1000/120){physics();acc-=1000/120}render();requestAnimationFrame(frame)}
+function resize(){let r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=r.width*d;canvas.height=r.height*d}new ResizeObserver(resize).observe(canvas);resize();
+function point(e){let r=canvas.getBoundingClientRect(),cw=canvas.width,ch=canvas.height,s=Math.min((cw-76)/(W+100),(ch-76)/(H+100)),ox=(cw-W*s)/2,oy=(ch-H*s)/2,d=canvas.width/r.width;return{x:(e.clientX-r.left)*d/s-ox/s,y:(e.clientY-r.top)*d/s-oy/s}}
+function shoot(){if(moving)return;let c=balls[0];if(c.sunk){c.sunk=false;c.x=245;c.y=H/2}let dx=aim.x-c.x,dy=aim.y-c.y,d=Math.hypot(dx,dy)||1,s=4.5+power*.155;c.vx=dx/d*s;c.vy=dy/d*s;moving=true;shots++;document.querySelector("#shots").textContent=String(shots).padStart(2,"0");document.querySelector("#status").textContent="球在滚动…";sound(5,78)}
+canvas.addEventListener("pointermove",e=>{if(!moving)aim=point(e)});canvas.addEventListener("pointerup",e=>{if(!moving){aim=point(e);shoot()}});document.querySelector("#shoot").onclick=shoot;
+document.querySelector("#power").oninput=e=>{power=+e.target.value;e.target.style.setProperty("--p",power+"%");document.querySelector("#powerValue").textContent=power};
+document.querySelector("#reset").onclick=()=>{rack();moving=false;shots=sunk=0;document.querySelector("#shots").textContent="00";document.querySelector("#sunk").textContent="00";document.querySelector("#status").textContent="移动指针瞄准，点击击球"};
+document.querySelector("#sound").onclick=e=>{muted=!muted;e.target.textContent=muted?"音效关":"音效开"};addEventListener("keydown",e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();shoot()}});
+rack();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
